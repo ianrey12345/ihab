@@ -1,0 +1,228 @@
+/* General Body Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* Main Shop Container */
+#shop-container {
+    position: relative;
+    min-height: 100vh;
+    padding: 10px;
+    color: rgb(95, 26, 26);
+}
+
+/* Background Image Styling */
+#background-image {
+    background-image: url('/images/pics.jpg'); /* Shop background image */
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: -1;
+}
+
+/* Description Styling */
+.descript {
+    text-align: center;
+    font-size: xx-small;
+}
+
+/* About Us Section Styling */
+.about-us {
+    margin-top: 100px;
+    text-align: center;
+    font-size: large;
+}
+
+/* Wave Effect for 'IHarbor' */
+@keyframes wave {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    25% {
+        transform: translateY(-10px);
+    }
+    50% {
+        transform: translateY(10px);
+    }
+    75% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Apply wave effect to the h1 element */
+.about-us h1 {
+    display: inline-block;
+    font-size: 5em;
+    animation: wave 2s ease-in-out infinite;
+}
+
+/* Product Section Styling */
+.products {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 40px;
+}
+
+/* Product Item Styling */
+.product-item {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.8);
+    font-family: 'Times New Roman', sans-serif;
+    font-size: larger;
+    padding: 15px;
+    border-radius: 8px;
+    transition: transform 0.3s ease; /* Smooth scale effect */
+}
+
+.product-item:hover {
+    transform: scale(1.05); /* Slight zoom effect on hover */
+}
+
+/* Image Styling in Product Item */
+.product-item img {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* Price Styling */
+.price {
+    font-size: 1.2em;
+    margin-top: 10px;
+}
+
+/* Add to Cart Button Styling */
+.add-to-cart {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #ff6f61;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.add-to-cart:hover {
+    background-color: #e55a4b;
+}
+
+/* Cart Button Styling */
+#cart-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #ff6f61;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+#cart-button:hover {
+    background-color: #c7d01d;
+}
+
+/* Cart Modal Styling */
+.cart-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Cart Content Styling */
+.cart-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    width: 300px;
+}
+
+/* Checkout Form Styling */
+#checkout-form {
+    text-align: center;
+    background-color: #eb9bd1;
+    margin-top: 20px;
+    display: none; /* Initially hidden */
+    position: absolute;
+    top: 50px;
+    right: 0px;
+    width: 500px;
+}
+
+/* Checkout Form Input Styling */
+#checkout-form input {
+    margin-bottom: 10px;
+    padding: 10px;
+    width: 30%;
+    border-radius: 10px;
+    border: 1px solid #0c0b0c;
+}
+
+/* Checkout Form Button Styling */
+#checkout-form button {
+    padding: 10px 20px;
+    background-color: #ff6f61;
+    color: rgb(249, 243, 243);
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+#checkout-form button:hover {
+    background-color: #151312;
+}
+
+/* Category Buttons Styling */
+.category-buttons {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.category-buttons button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    background-color: #ff6f61;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-family: Arial, sans-serif;
+    transition: all 0.3s ease;
+}
+
+.category-buttons button:hover {
+    background-color: #e55a4b;
+    transform: scale(1.1); /* Slight zoom effect on hover */
+}
+
+.category-buttons button.active {
+    background-color: #c7d01d;
+    color: black;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Hidden Section Styling for Categories */
+.products.hidden {
+    display: none;
+}
