@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MallEye — Live Monitor</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="logo">Mall<span>Eye</span></div>
+    <div class="hdr-r">
+      <span id="last-sync">Connecting…</span>
+      <div class="pill">
+        <div class="sdot wait" id="sdot"></div>
+        <span id="stxt">CONNECTING</span>
+      </div>
+      <button class="btn-rst" onclick="doReset()">↺ Reset Counter</button>
+    </div>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main>
+
+    <!-- Date Bar -->
+    <div class="datebar">
+      <div>
+        <h1>TODAY'S LIVE REPORT</h1>
+        <div id="date-display">Loading…</div>
+      </div>
+      <div id="cap-badge" class="cap-badge ok">✓ NORMAL</div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="alert-bar" id="alert-bar">
+      ⚠️ <span id="alert-txt"></span>
+    </div>
+
+    <!-- Hero Cards -->
+    <div class="hero-grid">
+
+      <!-- Occupancy -->
+      <div class="card card-occ">
+        <div class="card-label">Current Occupancy</div>
+        <div class="n" id="n-occ">0</div>
+        <div class="card-sub">people inside the mall right now</div>
+        <div class="gauge-wrap">
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="gfill" style="width:0%"></div>
+          </div>
+          <div class="gauge-row">
+            <span>0</span>
+            <span id="gpct">0% of capacity</span>
+            <span id="n-maxcap">5000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total In -->
+      <div class="card card-in">
+        <div class="card-label">⬇ Total Entered</div>
+        <div class="n" id="n-in">0</div>
+        <div class="card-sub">today</div>
+      </div>
+
+      <!-- Total Out -->
+      <div class="card card-out">
+        <div class="card-label">⬆ Total Exited</div>
+        <div class="n" id="n-out">0</div>
+        <div class="card-sub">today</div>
+      </div>
+
+    </div>
+
+    <!-- Stats Mini Row -->
+    <div class="stats-row">
+      <div class="smc">
+        <div class="smc-lbl">Peak Occupancy</div>
+        <div class="smc-val cy" id="n-peak">0</div>
+        <div class="smc-sub" id="n-peakt">—</div>
+      </div>
+      <div class="smc">
+        <div class="smc-lbl">Turnover Rate</div>
+        <div class="smc-val cr" id="n-turn">—</div>
+        <div class="smc-sub">exits ÷ entries</div>
+      </div>
+      <div class="smc">
+        <div class="smc-lbl">Last ESP32 Sync</div>
+        <div class="smc-val cb" id="n-upd" style="font-size:1.25rem; padding-top:5px;">—</div>
+        <div class="smc-sub">device timestamp</div>
+      </div>
+      <div class="smc">
+        <div class="smc-lbl">Max Capacity</div>
+        <div class="smc-val cg" id="n-cap2">5,000</div>
+        <div class="smc-sub">configured limit</div>
+      </div>
+    </div>
+
+    <!-- Chart + Log -->
+    <div class="btm">
+
+      <!-- Hourly Chart -->
+      <div class="card">
+        <div class="card-label" style="margin-bottom:12px;">Hourly Breakdown</div>
+        <div style="display:flex; gap:14px; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:6px; font-family:'DM Mono',monospace; font-size:.63rem; color:var(--muted);">
+            <div style="width:10px; height:10px; border-radius:3px; background:var(--green)"></div>Entries
+          </div>
+          <div style="display:flex; align-items:center; gap:6px; font-family:'DM Mono',monospace; font-size:.63rem; color:var(--muted);">
+            <div style="width:10px; height:10px; border-radius:3px; background:var(--red)"></div>Exits
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="hChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Event Log -->
+      <div class="card log-card">
+        <div class="log-hdr">
+          <div class="log-title">Live Event Log</div>
+          <div style="font-family:'DM Mono',monospace; font-size:.58rem; color:var(--muted);">realtime · firebase</div>
+        </div>
+        <div class="log-body" id="log-body">
+          <div class="log-empty">Connecting to Firebase…</div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- App Logic (ES Module) -->
+  <script type="module" src="script.js"></script>
+
+</body>
+</html>
