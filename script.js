@@ -1,5 +1,8 @@
-import { initializeApp }                  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+// ── FIREBASE SDK IMPORTS ──────────────────
+// Fix 1: Updated to latest stable v11 (v10.12.0 had known RTDB bugs)
+import { initializeApp }                          from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, onValue, set, get }    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { getAuth, signInAnonymously }             from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
 // ── FIREBASE CONFIG ───────────────────────
 const firebaseConfig = {
@@ -12,10 +15,29 @@ const firebaseConfig = {
   appId:             "1:1045074950770:web:db213db6f32e45eb67e0eb"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
+// ── INIT FIREBASE ─────────────────────────
+const app  = initializeApp(firebaseConfig);
+const db   = getDatabase(app);
+const auth = getAuth(app);
+
+// Fix 2: Sign in anonymously before reading/writing
+// Without this, Firebase rules with auth != null will reject requests
+signInAnonymously(auth)
+  .then(() => {
+    console.log("Firebase: signed in anonymously");
+    initChart();
+    listen();
+  })
+  .catch(err => {
+    console.error("Firebase auth failed:", err);
+    // Still try to connect in case rules allow public access
+    initChart();
+    listen();
+  });
 
 // ── HELPERS ───────────────────────────────
+
+// Fix 3: Pad single-digit date parts so key is always YYYYMMDD
 function todayKey() {
   const d = new Date();
   return d.getFullYear()
@@ -35,11 +57,11 @@ function animNum(id, val) {
 }
 
 function setOnline(ok) {
-  document.getElementById('sdot').className  = 'sdot ' + (ok ? 'on' : 'off');
+  document.getElementById('sdot').className   = 'sdot ' + (ok ? 'on' : 'off');
   document.getElementById('stxt').textContent = ok ? 'LIVE' : 'OFFLINE';
 }
 
-// ── CHART ────────────────────────────────
+// ── CHART ─────────────────────────────────
 let chart = null;
 
 function initChart() {
@@ -71,11 +93,19 @@ function initChart() {
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: '#4a5a70', font: { size: 9, family: 'DM Mono' }, maxTicksLimit: 12 }, grid: { color: 'rgba(255,255,255,.03)' } },
-        y: { ticks: { color: '#4a5a70', font: { size: 10, family: 'DM Mono' } }, grid: { color: 'rgba(255,255,255,.03)' }, beginAtZero: true }
+        x: {
+          ticks: { color: '#4a5a70', font: { size: 9, family: 'DM Mono' }, maxTicksLimit: 12 },
+          grid:  { color: 'rgba(255,255,255,.03)' }
+        },
+        y: {
+          ticks: { color: '#4a5a70', font: { size: 10, family: 'DM Mono' } },
+          grid:  { color: 'rgba(255,255,255,.03)' },
+          beginAtZero: true
+        }
       }
     }
   });
@@ -90,6 +120,7 @@ function renderLog(events) {
   }
   const icons  = { in: '↓', out: '↑', reset: '↺' };
   const labels = { in: 'Entry', out: 'Exit', reset: 'Reset' };
+
   el.innerHTML = events.map(e => `
     <div class="log-row ${e.type || 'in'}">
       <div class="log-ic">${icons[e.type] || '↓'}</div>
@@ -99,13 +130,23 @@ function renderLog(events) {
     </div>`).join('');
 }
 
-// ── MAIN LISTENER ─────────────────────────
+// ── MAIN FIREBASE LISTENER ────────────────
+// Fix 4: Keep track of listener so we don't attach duplicates on midnight refresh
+let activeListener = null;
+
 function listen() {
   const dbRef = ref(db, `malleye/counter/${todayKey()}`);
 
-  onValue(dbRef, snap => {
+  // Fix 5: Unsubscribe old listener before attaching a new one
+  if (activeListener) {
+    activeListener();
+    activeListener = null;
+  }
+
+  activeListener = onValue(dbRef, snap => {
     setOnline(true);
-    document.getElementById('last-sync').textContent = 'Last sync: ' + new Date().toLocaleTimeString();
+    document.getElementById('last-sync').textContent =
+      'Last sync: ' + new Date().toLocaleTimeString();
 
     const d = snap.val();
     if (!d) {
@@ -116,27 +157,33 @@ function listen() {
 
     const totalIn  = d.totalIn  || 0;
     const totalOut = d.totalOut || 0;
-    const occ      = d.occupancy !== undefined ? d.occupancy : Math.max(0, totalIn - totalOut);
-    const maxCap   = d.maxCapacity || 5000;
-    const pct      = Math.min(100, Math.round(occ / maxCap * 100));
+
+    // Fix 6: Always recalculate occupancy as fallback if ESP32 didn't write it
+    const occ    = (typeof d.occupancy === 'number') ? d.occupancy : Math.max(0, totalIn - totalOut);
+    const maxCap = d.maxCapacity || 5000;
+    const pct    = Math.min(100, Math.round(occ / maxCap * 100));
 
     // Numbers
     animNum('n-occ',  occ);
     animNum('n-in',   totalIn);
     animNum('n-out',  totalOut);
     animNum('n-peak', d.peakCount || 0);
+
     document.getElementById('n-peakt').textContent  = d.peakTime ? `at ${d.peakTime}` : '—';
     document.getElementById('n-upd').textContent    = d.lastUpdated || '—';
     document.getElementById('n-maxcap').textContent = maxCap.toLocaleString();
     document.getElementById('n-cap2').textContent   = maxCap.toLocaleString();
-    document.getElementById('n-turn').textContent   = totalIn > 0 ? Math.round(totalOut / totalIn * 100) + '%' : '—';
+    document.getElementById('n-turn').textContent   =
+      totalIn > 0 ? Math.round(totalOut / totalIn * 100) + '%' : '—';
 
     // Gauge
     const fill = document.getElementById('gfill');
     fill.style.width      = pct + '%';
-    fill.style.background = pct >= 100 ? 'linear-gradient(90deg,#f87171,#ef4444)'
-                          : pct >= 80  ? 'linear-gradient(90deg,#fbbf24,#f97316)'
-                                       : 'linear-gradient(90deg,#34d399,#06b6d4)';
+    fill.style.background = pct >= 100
+      ? 'linear-gradient(90deg,#f87171,#ef4444)'
+      : pct >= 80
+        ? 'linear-gradient(90deg,#fbbf24,#f97316)'
+        : 'linear-gradient(90deg,#34d399,#06b6d4)';
     document.getElementById('gpct').textContent = pct + '% of capacity';
 
     // Capacity badge
@@ -183,19 +230,33 @@ function listen() {
 
   }, err => {
     setOnline(false);
-    console.error('Firebase error:', err);
+    console.error('Firebase listener error:', err.code, err.message);
   });
 }
 
 // ── RESET ─────────────────────────────────
+// Fix 7: Reset also clears the events log and hourly data in Firebase
 window.doReset = async function () {
   if (!confirm('Reset all counters to zero?\n\nThis will write zeros to Firebase and your ESP32 will pick it up on next sync.')) return;
-  await set(ref(db, `malleye/counter/${todayKey()}`), {
-    totalIn: 0, totalOut: 0, occupancy: 0,
-    peakCount: 0, peakTime: '',
-    lastUpdated: new Date().toLocaleTimeString(),
-    mallName: 'My Mall', maxCapacity: 5000
-  });
+
+  try {
+    await set(ref(db, `malleye/counter/${todayKey()}`), {
+      totalIn:     0,
+      totalOut:    0,
+      occupancy:   0,
+      peakCount:   0,
+      peakTime:    '',
+      lastUpdated: new Date().toLocaleTimeString(),
+      mallName:    'My Mall',
+      maxCapacity: 5000,
+      hourly:      {},
+      events:      {}
+    });
+    console.log('Reset successful');
+  } catch (err) {
+    console.error('Reset failed:', err.code, err.message);
+    alert('Reset failed: ' + err.message);
+  }
 };
 
 // ── INIT ──────────────────────────────────
@@ -203,16 +264,13 @@ document.getElementById('date-display').textContent = new Date().toLocaleDateStr
   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
 });
 
-initChart();
-listen();
-
-// Refresh listener at midnight
+// Fix 8: Midnight refresh — re-attach listener for new date key
 setInterval(() => {
   const n = new Date();
   if (n.getHours() === 0 && n.getMinutes() === 0) {
     document.getElementById('date-display').textContent = n.toLocaleDateString('en-US', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
-    listen();
+    listen(); // now safely unsubscribes old listener first
   }
 }, 60000);
